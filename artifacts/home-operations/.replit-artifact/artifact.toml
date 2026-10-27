@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Home Operations"
+description = "A secure operations platform for Nairobi children's homes. Gives leadership an organization-wide view while home managers handle their assigned home's finances, supplies, bills, issues, and weekly reports."
+version = "1.0.0"
+id = "artifacts/home-operations"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18481
+
+[services.development]
+run = "pnpm --filter @workspace/home-operations run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/home-operations", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/home-operations/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18481"
+BASE_PATH = "/"

@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Children’s homes operations management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: operations
+    description: Organization operations
+  - name: storage
+    description: Private issue attachment storage
 paths:
   /healthz:
     get:
@@ -24,7 +28,510 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /session:
+    get:
+      operationId: getSession
+      tags: [operations]
+      summary: Get the current user's organization access
+      responses:
+        "200":
+          description: Current membership and organization settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [operations]
+      summary: Get organization or assigned-home dashboard metrics
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /homes:
+    get:
+      operationId: listHomes
+      tags: [operations]
+      summary: List accessible homes
+      responses:
+        "200":
+          description: Homes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Home"
+    post:
+      operationId: createHome
+      tags: [operations]
+      summary: Create a home
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HomeInput"
+      responses:
+        "201":
+          description: Created home
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Home"
+  /homes/{id}:
+    get:
+      operationId: getHome
+      tags: [operations]
+      summary: Get a home's operational profile
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Home profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Home"
+    patch:
+      operationId: updateHome
+      tags: [operations]
+      summary: Update a home profile or approval threshold
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HomeUpdate"
+      responses:
+        "200":
+          description: Updated home
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Home"
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [operations]
+      summary: Get organization finance settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationSettings"
+    patch:
+      operationId: updateSettings
+      tags: [operations]
+      summary: Update organization approval threshold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationSettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationSettings"
+  /members:
+    get:
+      operationId: listMembers
+      tags: [operations]
+      summary: List organization members
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+    post:
+      operationId: assignMember
+      tags: [operations]
+      summary: Assign a manager by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "201":
+          description: Assigned member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [operations]
+      summary: List accessible expenses
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - name: homeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [operations]
+      summary: Record an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "201":
+          description: Recorded expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+  /expenses/{id}/review:
+    post:
+      operationId: reviewExpense
+      tags: [operations]
+      summary: Approve or reject an expense
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseReviewInput"
+      responses:
+        "200":
+          description: Reviewed expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [operations]
+      summary: List accessible inventory
+      responses:
+        "200":
+          description: Inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: createInventoryItem
+      tags: [operations]
+      summary: Add an inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryInput"
+      responses:
+        "201":
+          description: Created inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+  /inventory/{id}:
+    patch:
+      operationId: updateInventoryItem
+      tags: [operations]
+      summary: Update an inventory count or threshold
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryUpdate"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+  /inventory/transfers:
+    post:
+      operationId: transferInventory
+      tags: [operations]
+      summary: Transfer supplies between homes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryTransferInput"
+      responses:
+        "201":
+          description: Transfer record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryTransfer"
+  /bills:
+    get:
+      operationId: listBills
+      tags: [operations]
+      summary: List recurring charges
+      responses:
+        "200":
+          description: Bills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bill"
+    post:
+      operationId: createBill
+      tags: [operations]
+      summary: Add a recurring charge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillInput"
+      responses:
+        "201":
+          description: Created bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+  /bills/{id}:
+    patch:
+      operationId: updateBill
+      tags: [operations]
+      summary: Update bill or mark it paid
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillUpdate"
+      responses:
+        "200":
+          description: Updated bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+  /issues:
+    get:
+      operationId: listIssues
+      tags: [operations]
+      summary: List accessible issues
+      responses:
+        "200":
+          description: Issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+    post:
+      operationId: createIssue
+      tags: [operations]
+      summary: Raise an issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "201":
+          description: Created issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+  /issues/{id}:
+    patch:
+      operationId: updateIssue
+      tags: [operations]
+      summary: Update issue status, priority, or assignment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueUpdate"
+      responses:
+        "200":
+          description: Updated issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+  /issues/{id}/comments:
+    post:
+      operationId: addIssueComment
+      tags: [operations]
+      summary: Add a private issue comment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCommentInput"
+      responses:
+        "201":
+          description: Added comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueComment"
+  /reports:
+    get:
+      operationId: listReports
+      tags: [operations]
+      summary: List weekly reports
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeeklyReport"
+    post:
+      operationId: submitWeeklyReport
+      tags: [operations]
+      summary: Submit a weekly report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeeklyReportInput"
+      responses:
+        "201":
+          description: Submitted report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReport"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [operations]
+      summary: List the user's notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [operations]
+      summary: Mark a notification as read
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a private file upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+  /storage/objects/{objectPath}:
+    get:
+      operationId: getStorageObject
+      tags: [storage]
+      summary: Serve an authorized private attachment
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +540,313 @@ components:
           type: string
       required:
         - status
+    Session:
+      type: object
+      required: [userId, email, role, homeId, threshold, homeName, isDemo]
+      properties:
+        userId: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [ceo, manager, unassigned] }
+        homeId: { type: [string, "null"] }
+        homeName: { type: [string, "null"] }
+        threshold: { type: number }
+        isDemo: { type: boolean }
+    Dashboard:
+      type: object
+      required: [homes, monthSpend, monthBudget, pendingApprovals, openIssues, lowStock, upcomingBills, reportCompliance, spendTrend, recentActivity, isDemo]
+      properties:
+        homes: { type: array, items: { $ref: "#/components/schemas/Home" } }
+        monthSpend: { type: number }
+        monthBudget: { type: number }
+        pendingApprovals: { type: integer }
+        openIssues: { type: integer }
+        lowStock: { type: integer }
+        upcomingBills: { type: integer }
+        reportCompliance: { type: number }
+        spendTrend: { type: array, items: { $ref: "#/components/schemas/TrendPoint" } }
+        recentActivity: { type: array, items: { $ref: "#/components/schemas/Activity" } }
+        isDemo: { type: boolean }
+    TrendPoint:
+      type: object
+      required: [label, spend, budget]
+      properties:
+        label: { type: string }
+        spend: { type: number }
+        budget: { type: number }
+    Activity:
+      type: object
+      required: [id, title, detail, timestamp, kind]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        detail: { type: string }
+        timestamp: { type: string, format: date-time }
+        kind: { type: string, enum: [expense, issue, report, inventory, bill] }
+    Home:
+      type: object
+      required: [id, name, location, managerName, capacity, occupancy, monthlyBudget, spend, status, reportSubmitted, approvalThreshold]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        location: { type: string }
+        managerName: { type: string }
+        capacity: { type: integer }
+        occupancy: { type: integer }
+        monthlyBudget: { type: number }
+        spend: { type: number }
+        status: { type: string, enum: [good, attention, urgent] }
+        reportSubmitted: { type: boolean }
+        approvalThreshold: { type: ["number", "null"] }
+    HomeInput:
+      type: object
+      required: [name, location, managerName, capacity, monthlyBudget]
+      properties:
+        name: { type: string, minLength: 1 }
+        location: { type: string, minLength: 1 }
+        managerName: { type: string, minLength: 1 }
+        capacity: { type: integer, minimum: 1 }
+        monthlyBudget: { type: number, minimum: 0 }
+    HomeUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        location: { type: string, minLength: 1 }
+        managerName: { type: string, minLength: 1 }
+        capacity: { type: integer, minimum: 1 }
+        monthlyBudget: { type: number, minimum: 0 }
+        approvalThreshold: { type: ["number", "null"], minimum: 0 }
+    OrganizationSettings:
+      type: object
+      required: [approvalThreshold]
+      properties:
+        approvalThreshold: { type: number, minimum: 0 }
+    OrganizationSettingsUpdate:
+      type: object
+      required: [approvalThreshold]
+      properties:
+        approvalThreshold: { type: number, minimum: 0 }
+    Member:
+      type: object
+      required: [id, email, role, homeId, homeName]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [ceo, manager] }
+        homeId: { type: ["string", "null"] }
+        homeName: { type: ["string", "null"] }
+    MemberInput:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, format: email }
+        role: { type: string, enum: [ceo, manager] }
+        homeId: { type: ["string", "null"] }
+    Expense:
+      type: object
+      required: [id, homeId, homeName, category, description, amount, date, status, submittedBy, approvalRequired]
+      properties:
+        id: { type: string }
+        homeId: { type: string }
+        homeName: { type: string }
+        category: { type: string }
+        description: { type: string }
+        amount: { type: number }
+        date: { type: string }
+        status: { type: string, enum: [pending, approved, rejected] }
+        submittedBy: { type: string }
+        approvalRequired: { type: boolean }
+    ExpenseInput:
+      type: object
+      required: [homeId, category, description, amount, date]
+      properties:
+        homeId: { type: string }
+        category: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        amount: { type: number, exclusiveMinimum: 0 }
+        date: { type: string }
+    ExpenseReviewInput:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approved, rejected] }
+        note: { type: string }
+    InventoryItem:
+      type: object
+      required: [id, homeId, homeName, name, category, quantity, unit, unitCost, lowStockAt, updatedAt]
+      properties:
+        id: { type: string }
+        homeId: { type: string }
+        homeName: { type: string }
+        name: { type: string }
+        category: { type: string }
+        quantity: { type: number }
+        unit: { type: string }
+        unitCost: { type: number }
+        lowStockAt: { type: number }
+        updatedAt: { type: string, format: date-time }
+    InventoryInput:
+      type: object
+      required: [homeId, name, category, quantity, unit, unitCost, lowStockAt]
+      properties:
+        homeId: { type: string }
+        name: { type: string, minLength: 1 }
+        category: { type: string, minLength: 1 }
+        quantity: { type: number, minimum: 0 }
+        unit: { type: string, minLength: 1 }
+        unitCost: { type: number, minimum: 0 }
+        lowStockAt: { type: number, minimum: 0 }
+    InventoryUpdate:
+      type: object
+      properties:
+        quantity: { type: number, minimum: 0 }
+        lowStockAt: { type: number, minimum: 0 }
+        unitCost: { type: number, minimum: 0 }
+    InventoryTransferInput:
+      type: object
+      required: [itemId, destinationHomeId, quantity]
+      properties:
+        itemId: { type: string }
+        destinationHomeId: { type: string }
+        quantity: { type: number, exclusiveMinimum: 0 }
+    InventoryTransfer:
+      type: object
+      required: [id, itemName, fromHome, toHome, quantity, createdAt]
+      properties:
+        id: { type: string }
+        itemName: { type: string }
+        fromHome: { type: string }
+        toHome: { type: string }
+        quantity: { type: number }
+        createdAt: { type: string, format: date-time }
+    Bill:
+      type: object
+      required: [id, homeId, homeName, name, vendor, amount, dueDate, frequency, status]
+      properties:
+        id: { type: string }
+        homeId: { type: string }
+        homeName: { type: string }
+        name: { type: string }
+        vendor: { type: string }
+        amount: { type: number }
+        dueDate: { type: string }
+        frequency: { type: string, enum: [weekly, monthly, quarterly, annually] }
+        status: { type: string, enum: [upcoming, paid, overdue] }
+    BillInput:
+      type: object
+      required: [homeId, name, vendor, amount, dueDate, frequency]
+      properties:
+        homeId: { type: string }
+        name: { type: string, minLength: 1 }
+        vendor: { type: string, minLength: 1 }
+        amount: { type: number, exclusiveMinimum: 0 }
+        dueDate: { type: string }
+        frequency: { type: string, enum: [weekly, monthly, quarterly, annually] }
+    BillUpdate:
+      type: object
+      properties:
+        status: { type: string, enum: [upcoming, paid, overdue] }
+        dueDate: { type: string }
+        amount: { type: number, exclusiveMinimum: 0 }
+    Issue:
+      type: object
+      required: [id, homeId, homeName, title, description, priority, status, deadline, assignedTo, createdBy, createdAt, comments, attachments]
+      properties:
+        id: { type: string }
+        homeId: { type: string }
+        homeName: { type: string }
+        title: { type: string }
+        description: { type: string }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        status: { type: string, enum: [open, in_progress, resolved] }
+        deadline: { type: ["string", "null"] }
+        assignedTo: { type: ["string", "null"] }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        comments: { type: array, items: { $ref: "#/components/schemas/IssueComment" } }
+        attachments: { type: array, items: { $ref: "#/components/schemas/IssueAttachment" } }
+    IssueInput:
+      type: object
+      required: [homeId, title, description, priority]
+      properties:
+        homeId: { type: string }
+        title: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        deadline: { type: ["string", "null"] }
+        attachments: { type: array, items: { $ref: "#/components/schemas/IssueAttachment" } }
+    IssueUpdate:
+      type: object
+      properties:
+        status: { type: string, enum: [open, in_progress, resolved] }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        deadline: { type: ["string", "null"] }
+        assignedTo: { type: ["string", "null"] }
+    IssueCommentInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1 }
+    IssueComment:
+      type: object
+      required: [id, issueId, author, message, createdAt]
+      properties:
+        id: { type: string }
+        issueId: { type: string }
+        author: { type: string }
+        message: { type: string }
+        createdAt: { type: string, format: date-time }
+    IssueAttachment:
+      type: object
+      required: [name, objectPath, contentType, size]
+      properties:
+        name: { type: string }
+        objectPath: { type: string }
+        contentType: { type: string }
+        size: { type: integer }
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string, minLength: 1 }
+        size: { type: integer, minimum: 1 }
+        contentType: { type: string, minLength: 1 }
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string, format: uri }
+        objectPath: { type: string }
+    WeeklyReport:
+      type: object
+      required: [id, homeId, homeName, weekStarting, summary, highlights, needsSupport, submittedBy, submittedAt]
+      properties:
+        id: { type: string }
+        homeId: { type: string }
+        homeName: { type: string }
+        weekStarting: { type: string }
+        summary: { type: string }
+        highlights: { type: string }
+        needsSupport: { type: string }
+        submittedBy: { type: string }
+        submittedAt: { type: string, format: date-time }
+    WeeklyReportInput:
+      type: object
+      required: [homeId, weekStarting, summary, highlights, needsSupport]
+      properties:
+        homeId: { type: string }
+        weekStarting: { type: string }
+        summary: { type: string, minLength: 1 }
+        highlights: { type: string }
+        needsSupport: { type: string }
+    Notification:
+      type: object
+      required: [id, title, message, kind, read, createdAt, href]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        message: { type: string }
+        kind: { type: string, enum: [approval, issue, report, stock, bill] }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        href: { type: string }
 
