@@ -10,7 +10,7 @@ export interface WeeklyReport {
   id: string;
   homeId: string;
   homeName: string;
-  weekStarting: Date;
+  weekStarting: string;
   summary: string;
   highlights: string;
   needsSupport: string;

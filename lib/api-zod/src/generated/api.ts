@@ -265,7 +265,7 @@ export const ListExpensesResponseItem = zod.object({
   "category": zod.string(),
   "description": zod.string(),
   "amount": zod.number(),
-  "date": zod.coerce.date(),
+  "date": zod.string(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
   "submittedBy": zod.string(),
   "approvalRequired": zod.boolean()
@@ -287,7 +287,7 @@ export const CreateExpenseBody = zod.object({
   "category": zod.string().min(1),
   "description": zod.string().min(1),
   "amount": zod.number().gt(createExpenseBodyAmountExclusiveMin),
-  "date": zod.coerce.date()
+  "date": zod.string()
 })
 
 export const CreateExpenseResponse = zod.object({
@@ -297,7 +297,7 @@ export const CreateExpenseResponse = zod.object({
   "category": zod.string(),
   "description": zod.string(),
   "amount": zod.number(),
-  "date": zod.coerce.date(),
+  "date": zod.string(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
   "submittedBy": zod.string(),
   "approvalRequired": zod.boolean()
@@ -323,7 +323,7 @@ export const ReviewExpenseResponse = zod.object({
   "category": zod.string(),
   "description": zod.string(),
   "amount": zod.number(),
-  "date": zod.coerce.date(),
+  "date": zod.string(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
   "submittedBy": zod.string(),
   "approvalRequired": zod.boolean()
@@ -454,7 +454,7 @@ export const ListBillsResponseItem = zod.object({
   "name": zod.string(),
   "vendor": zod.string(),
   "amount": zod.number(),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string(),
   "frequency": zod.enum(['weekly', 'monthly', 'quarterly', 'annually']),
   "status": zod.enum(['upcoming', 'paid', 'overdue'])
 })
@@ -475,7 +475,7 @@ export const CreateBillBody = zod.object({
   "name": zod.string().min(1),
   "vendor": zod.string().min(1),
   "amount": zod.number().gt(createBillBodyAmountExclusiveMin),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string(),
   "frequency": zod.enum(['weekly', 'monthly', 'quarterly', 'annually'])
 })
 
@@ -486,7 +486,7 @@ export const CreateBillResponse = zod.object({
   "name": zod.string(),
   "vendor": zod.string(),
   "amount": zod.number(),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string(),
   "frequency": zod.enum(['weekly', 'monthly', 'quarterly', 'annually']),
   "status": zod.enum(['upcoming', 'paid', 'overdue'])
 })
@@ -505,7 +505,7 @@ export const updateBillBodyAmountExclusiveMin = 0;
 
 export const UpdateBillBody = zod.object({
   "status": zod.enum(['upcoming', 'paid', 'overdue']).optional(),
-  "dueDate": zod.coerce.date().optional(),
+  "dueDate": zod.string().optional(),
   "amount": zod.number().gt(updateBillBodyAmountExclusiveMin).optional()
 })
 
@@ -516,7 +516,7 @@ export const UpdateBillResponse = zod.object({
   "name": zod.string(),
   "vendor": zod.string(),
   "amount": zod.number(),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string(),
   "frequency": zod.enum(['weekly', 'monthly', 'quarterly', 'annually']),
   "status": zod.enum(['upcoming', 'paid', 'overdue'])
 })
@@ -533,7 +533,7 @@ export const ListIssuesResponseItem = zod.object({
   "description": zod.string(),
   "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
   "status": zod.enum(['open', 'in_progress', 'resolved']),
-  "deadline": zod.coerce.date().nullable(),
+  "deadline": zod.string().nullable(),
   "assignedTo": zod.string().nullable(),
   "createdBy": zod.string(),
   "createdAt": zod.coerce.date(),
@@ -566,7 +566,7 @@ export const CreateIssueBody = zod.object({
   "title": zod.string().min(1),
   "description": zod.string().min(1),
   "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
-  "deadline": zod.coerce.date().nullish(),
+  "deadline": zod.string().nullish(),
   "attachments": zod.array(zod.object({
   "name": zod.string(),
   "objectPath": zod.string(),
@@ -583,7 +583,7 @@ export const CreateIssueResponse = zod.object({
   "description": zod.string(),
   "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
   "status": zod.enum(['open', 'in_progress', 'resolved']),
-  "deadline": zod.coerce.date().nullable(),
+  "deadline": zod.string().nullable(),
   "assignedTo": zod.string().nullable(),
   "createdBy": zod.string(),
   "createdAt": zod.coerce.date(),
@@ -613,7 +613,7 @@ export const UpdateIssueParams = zod.object({
 export const UpdateIssueBody = zod.object({
   "status": zod.enum(['open', 'in_progress', 'resolved']).optional(),
   "priority": zod.enum(['low', 'normal', 'high', 'urgent']).optional(),
-  "deadline": zod.coerce.date().nullish(),
+  "deadline": zod.string().nullish(),
   "assignedTo": zod.string().nullish()
 })
 
@@ -625,7 +625,7 @@ export const UpdateIssueResponse = zod.object({
   "description": zod.string(),
   "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
   "status": zod.enum(['open', 'in_progress', 'resolved']),
-  "deadline": zod.coerce.date().nullable(),
+  "deadline": zod.string().nullable(),
   "assignedTo": zod.string().nullable(),
   "createdBy": zod.string(),
   "createdAt": zod.coerce.date(),
@@ -675,7 +675,7 @@ export const ListReportsResponseItem = zod.object({
   "id": zod.string(),
   "homeId": zod.string(),
   "homeName": zod.string(),
-  "weekStarting": zod.coerce.date(),
+  "weekStarting": zod.string(),
   "summary": zod.string(),
   "highlights": zod.string(),
   "needsSupport": zod.string(),
@@ -693,7 +693,7 @@ export const ListReportsResponse = zod.array(ListReportsResponseItem)
 
 export const SubmitWeeklyReportBody = zod.object({
   "homeId": zod.string(),
-  "weekStarting": zod.coerce.date(),
+  "weekStarting": zod.string(),
   "summary": zod.string().min(1),
   "highlights": zod.string(),
   "needsSupport": zod.string()
@@ -703,7 +703,7 @@ export const SubmitWeeklyReportResponse = zod.object({
   "id": zod.string(),
   "homeId": zod.string(),
   "homeName": zod.string(),
-  "weekStarting": zod.coerce.date(),
+  "weekStarting": zod.string(),
   "summary": zod.string(),
   "highlights": zod.string(),
   "needsSupport": zod.string(),

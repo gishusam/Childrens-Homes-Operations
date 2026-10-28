@@ -104,7 +104,7 @@ async function listHomeCards(actor: NonNullable<Express.Request["actor"]>) {
     .from(homesTable)
     .where(
       actor.role === "manager"
-        ? eq(homesTable.id, actor.homeId)
+        ? eq(homesTable.id, actor.homeId!)
         : undefined,
     )
     .orderBy(homesTable.name);
@@ -347,46 +347,36 @@ router.get("/dashboard", async (req, res): Promise<void> => {
     return { label: month.toLocaleDateString("en-KE", { month: "short" }), spend, budget };
   });
   const homeNames = new Map(homes.map((home) => [home.id, home.name]));
-  const recentExpenseRows = ids.length
-    ? await db
-        .select()
-        .from(expensesTable)
-        .where(inArray(expensesTable.homeId, ids))
-        .orderBy(desc(expensesTable.createdAt))
-        .limit(5)
-    : [];
-  const recentIssueRows = ids.length
-    ? await db
-        .select()
-        .from(issuesTable)
-        .where(inArray(issuesTable.homeId, ids))
-        .orderBy(desc(issuesTable.createdAt))
-        .limit(5)
-    : [];
-  const recentReportRows = ids.length
-    ? await db
-        .select()
-        .from(weeklyReportsTable)
-        .where(inArray(weeklyReportsTable.homeId, ids))
-        .orderBy(desc(weeklyReportsTable.submittedAt))
-        .limit(5)
-    : [];
-  const recentInventoryRows = ids.length
-    ? await db
-        .select()
-        .from(inventoryItemsTable)
-        .where(inArray(inventoryItemsTable.homeId, ids))
-        .orderBy(desc(inventoryItemsTable.updatedAt))
-        .limit(5)
-    : [];
-  const recentBillRows = ids.length
-    ? await db
-        .select()
-        .from(billsTable)
-        .where(inArray(billsTable.homeId, ids))
-        .orderBy(desc(billsTable.dueDate))
-        .limit(5)
-    : [];
+  const recentExpenseRows = await db
+    .select()
+    .from(expensesTable)
+    .where(inArray(expensesTable.homeId, ids))
+    .orderBy(desc(expensesTable.createdAt))
+    .limit(5);
+  const recentIssueRows = await db
+    .select()
+    .from(issuesTable)
+    .where(inArray(issuesTable.homeId, ids))
+    .orderBy(desc(issuesTable.createdAt))
+    .limit(5);
+  const recentReportRows = await db
+    .select()
+    .from(weeklyReportsTable)
+    .where(inArray(weeklyReportsTable.homeId, ids))
+    .orderBy(desc(weeklyReportsTable.submittedAt))
+    .limit(5);
+  const recentInventoryRows = await db
+    .select()
+    .from(inventoryItemsTable)
+    .where(inArray(inventoryItemsTable.homeId, ids))
+    .orderBy(desc(inventoryItemsTable.updatedAt))
+    .limit(5);
+  const recentBillRows = await db
+    .select()
+    .from(billsTable)
+    .where(inArray(billsTable.homeId, ids))
+    .orderBy(desc(billsTable.dueDate))
+    .limit(5);
   const activity = [
     ...recentExpenseRows.map((row) => ({
       id: `expense-${row.id}`,
@@ -781,10 +771,12 @@ router.post("/expenses/:id/review", async (req, res): Promise<void> => {
   }
   const params = api.ReviewExpenseParams.safeParse(req.params);
   const parsed = api.ReviewExpenseBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
-    res.status(400).json({
-      error: params.success ? parsed.error.message : params.error.message,
-    });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
   const [existing] = await db

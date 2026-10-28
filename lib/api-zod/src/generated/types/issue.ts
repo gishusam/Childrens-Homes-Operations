@@ -19,7 +19,7 @@ export interface Issue {
   priority: IssuePriority;
   status: IssueStatus;
   /** @nullable */
-  deadline: Date | null;
+  deadline: string | null;
   /** @nullable */
   assignedTo: string | null;
   createdBy: string;

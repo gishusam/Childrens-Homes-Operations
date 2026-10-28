@@ -14,7 +14,7 @@ export interface Expense {
   category: string;
   description: string;
   amount: number;
-  date: Date;
+  date: string;
   status: ExpenseStatus;
   submittedBy: string;
   approvalRequired: boolean;

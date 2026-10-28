@@ -14,6 +14,11 @@ const today = (): string =>
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+const dueWithinDays = (date: string, days: number): boolean => {
+  const through = new Date(`${today()}T00:00:00Z`);
+  through.setUTCDate(through.getUTCDate() + days);
+  return date <= through.toISOString().slice(0, 10);
+};
 
 async function getBillHomeName(homeId: string): Promise<string> {
   const [home] = await db
@@ -95,6 +100,25 @@ router.post("/bills", async (req, res): Promise<void> => {
       status,
     })
     .returning();
+  if (dueWithinDays(bill.dueDate, 7)) {
+    await Promise.all([
+      notifyRole(
+        "ceo",
+        "Bill due soon",
+        `${home.name}: ${bill.name} is due ${bill.dueDate}.`,
+        "bill",
+        "/bills",
+      ),
+      notifyRole(
+        "manager",
+        "Bill due soon",
+        `${bill.name} is due ${bill.dueDate}.`,
+        "bill",
+        "/bills",
+        bill.homeId,
+      ),
+    ]);
+  }
   res.status(201).json(
     api.CreateBillResponse.parse({
       id: bill.id,
@@ -113,10 +137,12 @@ router.post("/bills", async (req, res): Promise<void> => {
 router.patch("/bills/:id", async (req, res): Promise<void> => {
   const params = api.UpdateBillParams.safeParse(req.params);
   const parsed = api.UpdateBillBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
-    res.status(400).json({
-      error: params.success ? parsed.error.message : params.error.message,
-    });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
   if (Object.keys(parsed.data).length === 0) {
@@ -156,14 +182,25 @@ router.patch("/bills/:id", async (req, res): Promise<void> => {
     .where(eq(billsTable.id, existing.id))
     .returning();
   const homeName = await getBillHomeName(bill.homeId);
-  if (bill.status === "overdue") {
-    await notifyRole(
-      "ceo",
-      "Bill is overdue",
-      `${homeName}: ${bill.name} was due ${bill.dueDate}.`,
-      "bill",
-      "/bills",
-    );
+  if (bill.status !== "paid" && dueWithinDays(bill.dueDate, 7)) {
+    const title = bill.dueDate < today() ? "Bill is overdue" : "Bill due soon";
+    await Promise.all([
+      notifyRole(
+        "ceo",
+        title,
+        `${homeName}: ${bill.name} is due ${bill.dueDate}.`,
+        "bill",
+        "/bills",
+      ),
+      notifyRole(
+        "manager",
+        title,
+        `${bill.name} is due ${bill.dueDate}.`,
+        "bill",
+        "/bills",
+        bill.homeId,
+      ),
+    ]);
   }
   res.json(
     api.UpdateBillResponse.parse({

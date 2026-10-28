@@ -15,6 +15,6 @@ export interface BillInput {
   vendor: string;
   /** @exclusiveMinimum 0 */
   amount: number;
-  dueDate: Date;
+  dueDate: string;
   frequency: BillInputFrequency;
 }

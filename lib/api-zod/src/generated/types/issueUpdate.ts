@@ -12,7 +12,7 @@ export interface IssueUpdate {
   status?: IssueUpdateStatus;
   priority?: IssueUpdatePriority;
   /** @nullable */
-  deadline?: Date | null;
+  deadline?: string | null;
   /** @nullable */
   assignedTo?: string | null;
 }

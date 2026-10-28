@@ -112,10 +112,12 @@ router.post("/inventory", async (req, res): Promise<void> => {
 router.patch("/inventory/:id", async (req, res): Promise<void> => {
   const params = api.UpdateInventoryItemParams.safeParse(req.params);
   const parsed = api.UpdateInventoryItemBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
-    res.status(400).json({
-      error: params.success ? parsed.error.message : params.error.message,
-    });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
   if (Object.keys(parsed.data).length === 0) {

@@ -15,7 +15,7 @@ export interface Bill {
   name: string;
   vendor: string;
   amount: number;
-  dueDate: Date;
+  dueDate: string;
   frequency: BillFrequency;
   status: BillStatus;
 }

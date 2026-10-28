@@ -172,12 +172,16 @@ router.post("/issues", async (req, res): Promise<void> => {
   });
   const comments: typeof issueCommentsTable.$inferSelect[] = [];
   const response = mapIssue(issue, home.name, comments);
+  const notificationTitle =
+    issue.priority === "urgent" ? "Urgent issue raised" : "New home issue";
+  const notificationMessage = `${home.name}: ${issue.title}`;
   await notifyRole(
-    "ceo",
-    issue.priority === "urgent" ? "Urgent issue raised" : "New home issue",
-    `${home.name}: ${issue.title}`,
+    isCeo(req.actor!) ? "manager" : "ceo",
+    notificationTitle,
+    notificationMessage,
     "issue",
     "/issues",
+    isCeo(req.actor!) ? issue.homeId : undefined,
   );
   res.status(201).json(api.CreateIssueResponse.parse(response));
 });
@@ -185,10 +189,12 @@ router.post("/issues", async (req, res): Promise<void> => {
 router.patch("/issues/:id", async (req, res): Promise<void> => {
   const params = api.UpdateIssueParams.safeParse(req.params);
   const parsed = api.UpdateIssueBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
-    res.status(400).json({
-      error: params.success ? parsed.error.message : params.error.message,
-    });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
   if (Object.keys(parsed.data).length === 0) {
@@ -233,6 +239,14 @@ router.patch("/issues/:id", async (req, res): Promise<void> => {
     issueHomeName(issue.homeId),
     commentsByIssue([issue.id]),
   ]);
+  await notifyRole(
+    isCeo(req.actor!) ? "manager" : "ceo",
+    "Issue updated",
+    `${homeName}: ${issue.title} needs follow-through.`,
+    "issue",
+    "/issues",
+    isCeo(req.actor!) ? issue.homeId : undefined,
+  );
   res.json(
     api.UpdateIssueResponse.parse(
       mapIssue(issue, homeName, comments.get(issue.id) ?? []),
@@ -243,10 +257,12 @@ router.patch("/issues/:id", async (req, res): Promise<void> => {
 router.post("/issues/:id/comments", async (req, res): Promise<void> => {
   const params = api.AddIssueCommentParams.safeParse(req.params);
   const parsed = api.AddIssueCommentBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
-    res.status(400).json({
-      error: params.success ? parsed.error.message : params.error.message,
-    });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
   const [issue] = await db

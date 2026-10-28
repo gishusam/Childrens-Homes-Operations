@@ -8,7 +8,7 @@
 
 export interface WeeklyReportInput {
   homeId: string;
-  weekStarting: Date;
+  weekStarting: string;
   /** @minLength 1 */
   summary: string;
   highlights: string;

@@ -32,6 +32,65 @@ function primaryEmail(
     .toLowerCase() ?? null;
 }
 
+async function bootstrapInitialCeo(
+  userId: string,
+  email: string,
+): Promise<typeof membersTable.$inferSelect | null> {
+  const configuredEmail = process.env.INITIAL_CEO_EMAIL?.trim().toLowerCase();
+  if (!configuredEmail || email !== configuredEmail) return null;
+
+  return db.transaction(async (tx) => {
+    const [existingCeo] = await tx
+      .select()
+      .from(membersTable)
+      .where(eq(membersTable.role, "ceo"))
+      .limit(1);
+    if (existingCeo) {
+      if (existingCeo.email !== email || (existingCeo.userId && existingCeo.userId !== userId)) {
+        return null;
+      }
+      if (!existingCeo.userId) {
+        const [claimedCeo] = await tx
+          .update(membersTable)
+          .set({ userId })
+          .where(eq(membersTable.id, existingCeo.id))
+          .returning();
+        return claimedCeo ?? null;
+      }
+      return existingCeo;
+    }
+
+    const [existingMember] = await tx
+      .select()
+      .from(membersTable)
+      .where(eq(membersTable.email, email))
+      .limit(1);
+    if (existingMember?.userId && existingMember.userId !== userId) return null;
+    if (existingMember) {
+      const [promoted] = await tx
+        .update(membersTable)
+        .set({ userId, role: "ceo", homeId: null })
+        .where(eq(membersTable.id, existingMember.id))
+        .returning();
+      return promoted ?? null;
+    }
+
+    const [created] = await tx
+      .insert(membersTable)
+      .values({ userId, email, role: "ceo", homeId: null })
+      .onConflictDoNothing({ target: membersTable.email })
+      .returning();
+    if (created) return created;
+
+    const [raced] = await tx
+      .select()
+      .from(membersTable)
+      .where(eq(membersTable.email, email))
+      .limit(1);
+    return raced?.role === "ceo" && raced.userId === userId ? raced : null;
+  });
+}
+
 export async function resolveActor(req: Request): Promise<Actor | null> {
   const { userId } = getAuth(req);
   if (!userId) return null;
@@ -43,6 +102,18 @@ export async function resolveActor(req: Request): Promise<Actor | null> {
     .limit(1);
 
   if (byUserId) {
+    if (byUserId.role !== "ceo") {
+      const promoted = await bootstrapInitialCeo(userId, byUserId.email);
+      if (promoted) {
+        return {
+          userId,
+          email: promoted.email,
+          role: promoted.role,
+          homeId: promoted.homeId,
+          memberId: promoted.id,
+        };
+      }
+    }
     return {
       userId,
       email: byUserId.email,
@@ -61,6 +132,17 @@ export async function resolveActor(req: Request): Promise<Actor | null> {
       role: "unassigned",
       homeId: null,
       memberId: null,
+    };
+  }
+
+  const initialCeo = await bootstrapInitialCeo(userId, email);
+  if (initialCeo) {
+    return {
+      userId,
+      email: initialCeo.email,
+      role: initialCeo.role,
+      homeId: initialCeo.homeId,
+      memberId: initialCeo.id,
     };
   }
 

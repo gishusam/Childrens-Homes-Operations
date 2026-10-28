@@ -9,7 +9,7 @@ import type { BillUpdateStatus } from './billUpdateStatus';
 
 export interface BillUpdate {
   status?: BillUpdateStatus;
-  dueDate?: Date;
+  dueDate?: string;
   /** @exclusiveMinimum 0 */
   amount?: number;
 }

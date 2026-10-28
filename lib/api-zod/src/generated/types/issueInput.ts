@@ -16,6 +16,6 @@ export interface IssueInput {
   description: string;
   priority: IssueInputPriority;
   /** @nullable */
-  deadline?: Date | null;
+  deadline?: string | null;
   attachments?: IssueAttachment[];
 }
